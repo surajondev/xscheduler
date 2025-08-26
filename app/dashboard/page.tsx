@@ -60,6 +60,7 @@ export default function TwitterScheduler() {
   const socialAccountId = localStorage?.getItem("social_account_id");
   const [scheduledDate, setScheduledDate] = useState("");
   const [scheduledTime, setScheduledTime] = useState("");
+  const [scheduledPosts, setScheduledPosts] = useState<any>([]);
   const characterLimit = 280;
 
   const handleConnectTwitter = async () => {
@@ -98,6 +99,20 @@ export default function TwitterScheduler() {
     // Here you would typically make an API call to verify and store the credentials
   };
 
+  const fetchTweets = async () => {
+    try {
+      const res = await axiosInstance.get(
+        `/social_accounts/${socialAccountId}/posts`
+      );
+      if (res?.data) {
+        setScheduledPosts(res?.data);
+      }
+    } catch (error: any) {
+      toast.error(error.error || "Unable to connect");
+    }
+    // Here you would typically make an API call to verify and store the credentials
+  };
+
   const handleSchedule = async () => {
     if (twitterUsername && twitterToken) {
       try {
@@ -105,7 +120,7 @@ export default function TwitterScheduler() {
         const res = await axiosInstance.post(
           `/social_accounts/${socialAccountId}/posts`,
           {
-            conent: tweetText,
+            content: tweetText,
             status: "scheduled",
             scheduled_at: moment(dateString).format("YYYY-MM-DD HH:mm:ss"),
             user_id: userId,
@@ -122,33 +137,6 @@ export default function TwitterScheduler() {
     }
   };
 
-  const scheduledPosts = [
-    {
-      id: 1,
-      content:
-        "Just launched our new feature! 🚀 Excited to see how it helps our users streamline their workflow. #ProductUpdate #Innovation",
-      scheduledFor: "Today, 2:30 PM",
-      status: "scheduled",
-      engagement: { likes: 0, retweets: 0, replies: 0 },
-    },
-    {
-      id: 2,
-      content:
-        "Behind the scenes look at our development process. Building great products takes time, patience, and amazing teamwork! 💪",
-      scheduledFor: "Tomorrow, 10:00 AM",
-      status: "scheduled",
-      engagement: { likes: 0, retweets: 0, replies: 0 },
-    },
-    {
-      id: 3,
-      content:
-        "Weekend vibes! What's everyone working on this Saturday? Share your projects below 👇 #WeekendHustle",
-      scheduledFor: "Sat, 9:00 AM",
-      status: "scheduled",
-      engagement: { likes: 0, retweets: 0, replies: 0 },
-    },
-  ];
-
   const analytics = {
     totalTweets: 156,
     totalEngagement: 12400,
@@ -158,6 +146,7 @@ export default function TwitterScheduler() {
 
   useEffect(() => {
     fetchConnect();
+    fetchTweets();
   }, []);
 
   return (
@@ -457,26 +446,27 @@ export default function TwitterScheduler() {
                   New Post
                 </Button>
               </div>
-
               <div className="grid gap-4">
-                {scheduledPosts.map((post) => (
-                  <Card key={post.id}>
-                    <CardContent className="p-4">
+                {scheduledPosts.map((post: any) => (
+                  <Card key={post?.id}>
+                    <CardContent className="px-4">
                       <div className="flex items-start justify-between gap-4">
                         <div className="flex-1 space-y-2">
                           <p className="text-foreground leading-relaxed">
-                            {post.content}
+                            {post?.content || "No Content"}
                           </p>
                           <div className="flex items-center gap-4 text-sm text-muted-foreground">
                             <div className="flex items-center gap-1">
                               <Clock className="h-3 w-3" />
-                              {post.scheduledFor}
+                              {moment(post?.scheduledAt).format(
+                                "DD-MM-YY hh:mm"
+                              )}
                             </div>
                             <Badge variant="secondary" className="text-xs">
                               {post.status}
                             </Badge>
                           </div>
-                          <div className="flex items-center gap-6 text-sm text-muted-foreground">
+                          {/* <div className="flex items-center gap-6 text-sm text-muted-foreground">
                             <div className="flex items-center gap-1">
                               <Heart className="h-3 w-3" />
                               {post.engagement.likes}
@@ -489,7 +479,7 @@ export default function TwitterScheduler() {
                               <MessageCircle className="h-3 w-3" />
                               {post.engagement.replies}
                             </div>
-                          </div>
+                          </div> */}
                         </div>
                         <Button variant="ghost" size="icon">
                           <MoreHorizontal className="h-4 w-4" />
