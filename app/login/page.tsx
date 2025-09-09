@@ -34,12 +34,14 @@ export default function LoginPage() {
         email,
         password,
       });
-      localStorage?.setItem("token", response?.data?.token?.token);
-      localStorage?.setItem("user_id", response?.data?.user?.id);
-      localStorage?.setItem(
-        "social_account_id",
-        response?.data?.social_account?.id
-      );
+      if (typeof window !== "undefined") {
+        localStorage.setItem("token", response?.data?.token?.token);
+        localStorage.setItem("user_id", response?.data?.user?.id);
+        localStorage.setItem(
+          "social_account_id",
+          response?.data?.social_account?.id
+        );
+      }
       router.push("/dashboard");
     } catch (error: any) {
       console.log(error);

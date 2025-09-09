@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import {
-  Calendar,
   BarChart3,
   PenTool,
   Settings,
@@ -22,6 +21,7 @@ import {
   AtSign,
   MapPin,
   Twitter,
+  Calendar as CalendarIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -31,6 +31,13 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
+import { Calendar } from "@/components/ui/calendar";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -54,14 +61,28 @@ export default function TwitterScheduler() {
   const [tweetText, setTweetText] = useState("");
   const [isConnectSheetOpen, setIsConnectSheetOpen] = useState(false);
   const [twitterUsername, setTwitterUsername] = useState("");
-  const [twitterToken, setTwitterToken] = useState("");
+  const [twitterToken, setTwitterToken] = useState({
+    access_token: "",
+    consumer_key: "",
+    consumer_secret: "",
+    token_secret: "",
+  });
   const [isConnected, setIsConnected] = useState(false);
-  const userId = localStorage?.getItem("user_id");
-  const socialAccountId = localStorage?.getItem("social_account_id");
-  const [scheduledDate, setScheduledDate] = useState("");
+  const [scheduledDate, setScheduledDate] = useState<any>("");
   const [scheduledTime, setScheduledTime] = useState("");
   const [scheduledPosts, setScheduledPosts] = useState<any>([]);
   const characterLimit = 280;
+  const [userId, setUserId] = useState<string | null>(null);
+  const [socialAccountId, setSocialAccountId] = useState<string | null>(null);
+
+  useEffect(() => {
+    // Runs only on client
+    const storedUserId = localStorage.getItem("user_id");
+    const storedSocialId = localStorage.getItem("social_account_id");
+
+    setUserId(storedUserId);
+    setSocialAccountId(storedSocialId);
+  }, []);
 
   const handleConnectTwitter = async () => {
     if (twitterUsername && twitterToken) {
@@ -69,7 +90,7 @@ export default function TwitterScheduler() {
         const res = await axiosInstance.post(
           `/social_accounts/${socialAccountId}/twitter_scheduler`,
           {
-            token: twitterToken,
+            ...twitterToken,
             username: twitterUsername,
           }
         );
@@ -114,15 +135,48 @@ export default function TwitterScheduler() {
   };
 
   const handleSchedule = async () => {
-    if (twitterUsername && twitterToken) {
+    if (twitterUsername && tweetText) {
       try {
-        const dateString = `${scheduledDate} ${scheduledTime}`;
+        // Combine the date and time strings
+        const dateTimeString = `${scheduledDate} ${scheduledTime}`;
+
+        // Use moment to parse and format the date and time
+        const scheduledAt = moment(dateTimeString, "YYYY-MM-DD HH:mm").format(
+          "YYYY-MM-DD HH:mm:ss"
+        );
+
         const res = await axiosInstance.post(
-          `/social_accounts/${socialAccountId}/posts`,
+          `/social_accounts/${socialAccountId}/posts/schedule`,
           {
             content: tweetText,
             status: "scheduled",
-            scheduled_at: moment(dateString).format("YYYY-MM-DD HH:mm:ss"),
+            scheduled_at: scheduledAt,
+            user_id: userId,
+            social_account_id: socialAccountId,
+          }
+        );
+        toast.success("Tweet Scheduled Successfully");
+        // Clear the form after successful scheduling
+        setTweetText("");
+        setScheduledDate("");
+        setScheduledTime("");
+      } catch (error: any) {
+        toast.error(error.error || "Unable to schedule tweet");
+      }
+    } else {
+      toast.error("Please enter tweet content and select a date/time.");
+    }
+  };
+
+  const handleNow = async () => {
+    if (twitterUsername) {
+      try {
+        const res = await axiosInstance.post(
+          `/social_accounts/${socialAccountId}/posts/now`,
+          {
+            content: tweetText,
+            status: "posted",
+            scheduled_at: null,
             user_id: userId,
             social_account_id: socialAccountId,
           }
@@ -206,13 +260,57 @@ export default function TwitterScheduler() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="token">API Bearer Token</Label>
+                    <Label htmlFor="token">Consumer Key</Label>
                     <Input
                       id="token"
                       type="password"
-                      placeholder="Enter your Twitter API bearer token"
-                      value={twitterToken}
-                      onChange={(e) => setTwitterToken(e.target.value)}
+                      placeholder="Enter your Twitter Consumer Key"
+                      value={twitterToken?.consumer_key}
+                      onChange={(e) =>
+                        setTwitterToken({
+                          ...twitterToken,
+                          consumer_key: e.target.value,
+                        })
+                      }
+                    />
+                    <Label htmlFor="token">Consumer Secret</Label>
+                    <Input
+                      id="token"
+                      type="password"
+                      placeholder="Enter your Twitter Secret"
+                      value={twitterToken?.consumer_secret}
+                      onChange={(e) =>
+                        setTwitterToken({
+                          ...twitterToken,
+                          consumer_secret: e.target.value,
+                        })
+                      }
+                    />
+                    <Label htmlFor="token">Access Token</Label>
+                    <Input
+                      id="token"
+                      type="password"
+                      placeholder="Enter your Twitter Acess Token"
+                      value={twitterToken?.access_token}
+                      onChange={(e) =>
+                        setTwitterToken({
+                          ...twitterToken,
+                          access_token: e.target.value,
+                        })
+                      }
+                    />
+                    <Label htmlFor="token">Token Secret</Label>
+                    <Input
+                      id="token"
+                      type="password"
+                      placeholder="Enter your Twitter Token Secret"
+                      value={twitterToken?.token_secret}
+                      onChange={(e) =>
+                        setTwitterToken({
+                          ...twitterToken,
+                          token_secret: e.target.value,
+                        })
+                      }
                     />
                     <p className="text-xs text-muted-foreground">
                       You can get this from your Twitter Developer Portal
@@ -393,20 +491,69 @@ export default function TwitterScheduler() {
                         <label className="text-sm font-medium">
                           Schedule Date
                         </label>
-                        <Input
-                          type="date"
-                          value={scheduledDate}
-                          onChange={(e) => setScheduledDate(e.target.value)}
-                        />
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <Button
+                              variant={"outline"}
+                              className={cn(
+                                "w-full justify-start text-left font-normal",
+                                !scheduledDate && "text-muted-foreground"
+                              )}
+                            >
+                              <CalendarIcon className="mr-2 h-4 w-4" />
+                              {scheduledDate ? (
+                                <span>
+                                  {moment(scheduledDate).format("DD-MM-YYYY")}
+                                </span>
+                              ) : (
+                                <span>Pick a date</span>
+                              )}
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0">
+                            <Calendar
+                              mode="single"
+                              selected={scheduledDate}
+                              onSelect={setScheduledDate}
+                              initialFocus
+                            />
+                          </PopoverContent>
+                        </Popover>
                       </div>
-                      <div className="space-y-2">
-                        <label className="text-sm font-medium">
-                          Schedule Time
-                        </label>
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">
+                        Schedule Time
+                      </label>
+                      <div className="flex items-center gap-2">
                         <Input
-                          type="time"
-                          value={scheduledTime}
-                          onChange={(e) => setScheduledTime(e.target.value)}
+                          type="number"
+                          min="0"
+                          max="23"
+                          placeholder="HH"
+                          value={scheduledTime.split(":")[0]}
+                          onChange={(e) => {
+                            const hours = e.target.value.padStart(2, "0");
+                            setScheduledTime(
+                              `${hours}:${scheduledTime.split(":")[1]}`
+                            );
+                          }}
+                          className="w-1/2 text-center"
+                        />
+                        <span>:</span>
+                        <Input
+                          type="number"
+                          min="0"
+                          max="59"
+                          placeholder="MM"
+                          value={scheduledTime.split(":")[1]}
+                          onChange={(e) => {
+                            const minutes = e.target.value.padStart(2, "0");
+                            setScheduledTime(
+                              `${scheduledTime.split(":")[0]}:${minutes}`
+                            );
+                          }}
+                          className="w-1/2 text-center"
                         />
                       </div>
                     </div>
@@ -420,7 +567,11 @@ export default function TwitterScheduler() {
                         <Clock className="h-4 w-4 mr-2" />
                         Schedule Tweet
                       </Button>
-                      <Button variant="outline" disabled={!isConnected}>
+                      <Button
+                        onClick={handleNow}
+                        variant="outline"
+                        disabled={!isConnected}
+                      >
                         Post Now
                       </Button>
                     </div>
