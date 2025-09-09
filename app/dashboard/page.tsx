@@ -51,6 +51,14 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+// --- Added Select component imports ---
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { axiosInstance } from "@/lib/axiosInstance";
 import { toast } from "sonner";
@@ -68,17 +76,25 @@ export default function TwitterScheduler() {
     token_secret: "",
   });
   const [isConnected, setIsConnected] = useState(false);
-  const [scheduledDate, setScheduledDate] = useState<any>("");
-  const [scheduledTime, setScheduledTime] = useState("");
+  const [scheduledDate, setScheduledDate] = useState<Date | undefined>(
+    undefined
+  );
+  // --- Replaced scheduledTime with scheduledHour ---
+  const [scheduledHour, setScheduledHour] = useState<string>("");
   const [scheduledPosts, setScheduledPosts] = useState<any>([]);
   const characterLimit = 280;
   const [userId, setUserId] = useState<string | null>(null);
   const [socialAccountId, setSocialAccountId] = useState<string | null>(null);
+  const [drawer, setDrawer] = useState<any>({});
+
+  const handleDrawer = (key: string, value: boolean) => {
+    setDrawer({ ...drawer, [key]: value });
+  };
 
   useEffect(() => {
-    // Runs only on client
     const storedUserId = localStorage.getItem("user_id");
     const storedSocialId = localStorage.getItem("social_account_id");
+    console.log(storedUserId, storedSocialId);
 
     setUserId(storedUserId);
     setSocialAccountId(storedSocialId);
@@ -100,7 +116,6 @@ export default function TwitterScheduler() {
       } catch (error: any) {
         toast.error(error.error || "Unable to connect");
       }
-      // Here you would typically make an API call to verify and store the credentials
     }
   };
 
@@ -117,7 +132,6 @@ export default function TwitterScheduler() {
     } catch (error: any) {
       toast.error(error.error || "Unable to connect");
     }
-    // Here you would typically make an API call to verify and store the credentials
   };
 
   const fetchTweets = async () => {
@@ -131,19 +145,19 @@ export default function TwitterScheduler() {
     } catch (error: any) {
       toast.error(error.error || "Unable to connect");
     }
-    // Here you would typically make an API call to verify and store the credentials
   };
 
+  // --- Modified handleSchedule to use scheduledHour ---
   const handleSchedule = async () => {
-    if (twitterUsername && tweetText) {
+    if (tweetText && scheduledDate && scheduledHour) {
       try {
-        // Combine the date and time strings
-        const dateTimeString = `${scheduledDate} ${scheduledTime}`;
+        // Format the date part to YYYY-MM-DD
+        const datePart = moment(scheduledDate).format("YYYY-MM-DD");
+        // Combine date and the selected hour, with minutes set to 00
+        const dateTimeString = `${datePart} ${scheduledHour}:00`;
 
-        // Use moment to parse and format the date and time
-        const scheduledAt = moment(dateTimeString, "YYYY-MM-DD HH:mm").format(
-          "YYYY-MM-DD HH:mm:ss"
-        );
+        // Use moment to parse and format the final timestamp
+        const scheduledAt = moment(dateTimeString, "YYYY-MM-DD HH:mm").format();
 
         const res = await axiosInstance.post(
           `/social_accounts/${socialAccountId}/posts/schedule`,
@@ -158,13 +172,13 @@ export default function TwitterScheduler() {
         toast.success("Tweet Scheduled Successfully");
         // Clear the form after successful scheduling
         setTweetText("");
-        setScheduledDate("");
-        setScheduledTime("");
+        setScheduledDate(undefined);
+        setScheduledHour("");
       } catch (error: any) {
         toast.error(error.error || "Unable to schedule tweet");
       }
     } else {
-      toast.error("Please enter tweet content and select a date/time.");
+      toast.error("Please enter tweet content and select a date and time.");
     }
   };
 
@@ -187,7 +201,6 @@ export default function TwitterScheduler() {
       } catch (error: any) {
         toast.error(error.error || "Unable to connect");
       }
-      // Here you would typically make an API call to verify and store the credentials
     }
   };
 
@@ -199,9 +212,11 @@ export default function TwitterScheduler() {
   };
 
   useEffect(() => {
-    fetchConnect();
-    fetchTweets();
-  }, []);
+    if (userId && socialAccountId) {
+      fetchConnect();
+      fetchTweets();
+    }
+  }, [userId]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -356,11 +371,8 @@ export default function TwitterScheduler() {
               <Settings className="h-5 w-5" />
             </Button>
             <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm" asChild>
-                <Link href="/login">Login</Link>
-              </Button>
               <Button size="sm" asChild>
-                <Link href="/register">Sign Up</Link>
+                <Link href="/register">Log Out</Link>
               </Button>
             </div>
           </div>
@@ -384,7 +396,7 @@ export default function TwitterScheduler() {
               className="w-full justify-start gap-3"
               onClick={() => setActiveTab("schedule")}
             >
-              <Calendar className="h-4 w-4" />
+              <CalendarIcon className="h-4 w-4" />
               Schedule
             </Button>
             <Button
@@ -491,7 +503,12 @@ export default function TwitterScheduler() {
                         <label className="text-sm font-medium">
                           Schedule Date
                         </label>
-                        <Popover>
+                        <Popover
+                          open={drawer?.calendar}
+                          onOpenChange={() =>
+                            handleDrawer("calendar", !drawer?.calendar)
+                          }
+                        >
                           <PopoverTrigger asChild>
                             <Button
                               variant={"outline"}
@@ -514,47 +531,38 @@ export default function TwitterScheduler() {
                             <Calendar
                               mode="single"
                               selected={scheduledDate}
-                              onSelect={setScheduledDate}
+                              onSelect={(val) => {
+                                setScheduledDate(val);
+                                handleDrawer("calendar", !drawer?.calendar);
+                              }}
                               initialFocus
                             />
                           </PopoverContent>
                         </Popover>
                       </div>
-                    </div>
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium">
-                        Schedule Time
-                      </label>
-                      <div className="flex items-center gap-2">
-                        <Input
-                          type="number"
-                          min="0"
-                          max="23"
-                          placeholder="HH"
-                          value={scheduledTime.split(":")[0]}
-                          onChange={(e) => {
-                            const hours = e.target.value.padStart(2, "0");
-                            setScheduledTime(
-                              `${hours}:${scheduledTime.split(":")[1]}`
-                            );
-                          }}
-                          className="w-1/2 text-center"
-                        />
-                        <span>:</span>
-                        <Input
-                          type="number"
-                          min="0"
-                          max="59"
-                          placeholder="MM"
-                          value={scheduledTime.split(":")[1]}
-                          onChange={(e) => {
-                            const minutes = e.target.value.padStart(2, "0");
-                            setScheduledTime(
-                              `${scheduledTime.split(":")[0]}:${minutes}`
-                            );
-                          }}
-                          className="w-1/2 text-center"
-                        />
+                      {/* --- This is the new time dropdown --- */}
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium">
+                          Schedule Time
+                        </label>
+                        <Select
+                          value={scheduledHour}
+                          onValueChange={setScheduledHour}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select hour" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {Array.from({ length: 24 }, (_, i) => {
+                              const hour = i.toString().padStart(2, "0");
+                              return (
+                                <SelectItem key={hour} value={hour}>
+                                  {`${hour}:00`}
+                                </SelectItem>
+                              );
+                            })}
+                          </SelectContent>
+                        </Select>
                       </div>
                     </div>
 
@@ -600,7 +608,7 @@ export default function TwitterScheduler() {
               <div className="grid gap-4">
                 {scheduledPosts.map((post: any) => (
                   <Card key={post?.id}>
-                    <CardContent className="px-4">
+                    <CardContent className="p-4">
                       <div className="flex items-start justify-between gap-4">
                         <div className="flex-1 space-y-2">
                           <p className="text-foreground leading-relaxed">
@@ -609,28 +617,14 @@ export default function TwitterScheduler() {
                           <div className="flex items-center gap-4 text-sm text-muted-foreground">
                             <div className="flex items-center gap-1">
                               <Clock className="h-3 w-3" />
-                              {moment(post?.scheduledAt).format(
-                                "DD-MM-YY hh:mm"
+                              {moment(post?.scheduled_at).format(
+                                "DD-MM-YY hh:mm A"
                               )}
                             </div>
                             <Badge variant="secondary" className="text-xs">
                               {post.status}
                             </Badge>
                           </div>
-                          {/* <div className="flex items-center gap-6 text-sm text-muted-foreground">
-                            <div className="flex items-center gap-1">
-                              <Heart className="h-3 w-3" />
-                              {post.engagement.likes}
-                            </div>
-                            <div className="flex items-center gap-1">
-                              <Repeat2 className="h-3 w-3" />
-                              {post.engagement.retweets}
-                            </div>
-                            <div className="flex items-center gap-1">
-                              <MessageCircle className="h-3 w-3" />
-                              {post.engagement.replies}
-                            </div>
-                          </div> */}
                         </div>
                         <Button variant="ghost" size="icon">
                           <MoreHorizontal className="h-4 w-4" />

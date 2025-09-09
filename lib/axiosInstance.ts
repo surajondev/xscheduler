@@ -6,6 +6,8 @@ export const baseURL =
     ? "http://localhost:3333"
     : "https://xscheduler-adonisjs.onrender.com";
 
+// export const baseURL = "https://xscheduler-adonisjs.onrender.com";
+
 export const axiosInstance = axios.create({
   baseURL,
   headers: {
