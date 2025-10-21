@@ -71,7 +71,10 @@ export default function TwitterScheduler() {
         const datePart = moment(scheduledDate).format("YYYY-MM-DD");
         const dateTimeString = `${datePart} ${scheduledHour}:00`;
 
-        const scheduledAt = moment(dateTimeString, "YYYY-MM-DD HH:mm").format();
+        const scheduledAt = moment(
+          dateTimeString,
+          "YYYY-MM-DD HH:mm",
+        ).toISOString();
 
         const attachmentPromises = attachments.map(async (file) => {
           const data = await toBase64(file);
