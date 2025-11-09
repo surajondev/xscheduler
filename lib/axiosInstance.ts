@@ -1,12 +1,12 @@
 import axios from "axios";
 import { toast } from "sonner";
 
-export const baseURL =
-  process.env.NODE_ENV === "development"
-    ? "http://localhost:3333"
-    : "https://xscheduler-adonisjs.onrender.com";
+// export const baseURL =
+//   process.env.NODE_ENV === "development"
+//     ? "http://localhost:3333"
+//     : "https://site--xscheduler--2jc9zdxt85l6.code.run/";
 
-// export const baseURL = "https://xscheduler-adonisjs.onrender.com";
+export const baseURL = "https://site--xscheduler--2jc9zdxt85l6.code.run/";
 
 export const axiosInstance = axios.create({
   baseURL,
@@ -26,7 +26,7 @@ axiosInstance.interceptors.request.use(
     }
     return config;
   },
-  (error) => Promise.reject(error),
+  (error) => Promise.reject(error)
 );
 
 // Handle responses
@@ -45,5 +45,5 @@ axiosInstance.interceptors.response.use(
     }
 
     return Promise.reject(error);
-  },
+  }
 );
