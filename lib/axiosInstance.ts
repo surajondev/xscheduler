@@ -1,12 +1,12 @@
 import axios from "axios";
 import { toast } from "sonner";
 
-// export const baseURL =
-//   process.env.NODE_ENV === "development"
-//     ? "http://localhost:3333"
-//     : "https://site--xscheduler--2jc9zdxt85l6.code.run/";
+export const baseURL =
+  process.env.NODE_ENV === "development"
+    ? "http://localhost:3333"
+    : "https://site--xscheduler--2jc9zdxt85l6.code.run/";
 
-export const baseURL = "https://site--xscheduler--2jc9zdxt85l6.code.run/";
+// export const baseURL = "https://site--xscheduler--2jc9zdxt85l6.code.run/";
 
 export const axiosInstance = axios.create({
   baseURL,
@@ -26,7 +26,7 @@ axiosInstance.interceptors.request.use(
     }
     return config;
   },
-  (error) => Promise.reject(error)
+  (error) => Promise.reject(error),
 );
 
 // Handle responses
@@ -39,11 +39,11 @@ axiosInstance.interceptors.response.use(
       toast.error("Session expired", {
         description: "Please log in again to continue.",
       });
-      window.location.href = "/login";
+      // window.location.href = "/login";
     } else {
       toast.error(response?.message || "An error occurred");
     }
 
     return Promise.reject(error);
-  }
+  },
 );

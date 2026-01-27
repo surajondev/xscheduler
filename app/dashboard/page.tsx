@@ -181,7 +181,7 @@ export default function TwitterScheduler() {
 
       {activeTab === "analytics" && <Analytics analytics={analytics} />}
 
-      {activeTab === "calendar" && <Calendar />}
+      {activeTab === "calendar" && <Calendar posts={scheduledPosts} />}
     </>
   );
 }

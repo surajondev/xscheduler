@@ -9,11 +9,11 @@ export default function DashboardLayout({
 }) {
   return (
     <DashboardProvider>
-      <div className="min-h-screen bg-background">
+      <div className="h-screen bg-background flex flex-col overflow-hidden">
         <Header />
-        <div className="flex">
+        <div className="flex flex-1 overflow-hidden">
           <Sidebar />
-          <main className="flex-1 p-6">{children}</main>
+          <main className="flex-1 overflow-y-auto p-6">{children}</main>
         </div>
       </div>
     </DashboardProvider>

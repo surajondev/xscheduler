@@ -12,7 +12,7 @@ import { useDashboard } from "../context/DashboardContext";
 export default function Sidebar() {
   const { activeTab, setActiveTab } = useDashboard();
   return (
-    <aside className="w-64 border-r border-border bg-sidebar min-h-[calc(100vh-4rem)]">
+    <aside className="w-64 border-r border-border bg-sidebar h-full">
       <nav className="p-4 space-y-2">
         <Button
           variant={activeTab === "compose" ? "default" : "ghost"}
