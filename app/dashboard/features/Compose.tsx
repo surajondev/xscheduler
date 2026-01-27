@@ -272,21 +272,59 @@ export default function Compose({
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-medium">Schedule Time</label>
-                <Select value={scheduledHour} onValueChange={setScheduledHour}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select hour" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Array.from({ length: 24 }, (_, i) => {
-                      const hour = i.toString().padStart(2, "0");
-                      return (
-                        <SelectItem key={hour} value={hour}>
-                          {`${hour}:00`}
-                        </SelectItem>
-                      );
-                    })}
-                  </SelectContent>
-                </Select>
+                <div className="flex gap-2">
+                  <Select
+                    value={
+                      scheduledHour
+                        ? (parseInt(scheduledHour) % 12 || 12)
+                            .toString()
+                            .padStart(2, "0")
+                        : ""
+                    }
+                    onValueChange={(val) => {
+                      const period =
+                        parseInt(scheduledHour || "0") >= 12 ? "PM" : "AM";
+                      let newHour = parseInt(val);
+                      if (period === "PM" && newHour !== 12) newHour += 12;
+                      if (period === "AM" && newHour === 12) newHour = 0;
+                      setScheduledHour(newHour.toString().padStart(2, "0"));
+                    }}
+                  >
+                    <SelectTrigger className="flex-1">
+                      <SelectValue placeholder="Hour" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Array.from({ length: 12 }, (_, i) => {
+                        const hour = (i + 1).toString().padStart(2, "0");
+                        return (
+                          <SelectItem key={hour} value={hour}>
+                            {hour}
+                          </SelectItem>
+                        );
+                      })}
+                    </SelectContent>
+                  </Select>
+                  <Select
+                    value={parseInt(scheduledHour || "0") >= 12 ? "PM" : "AM"}
+                    onValueChange={(val) => {
+                      let currentHour = parseInt(scheduledHour || "0") % 12;
+                      if (currentHour === 0) currentHour = 12;
+
+                      let newHour = currentHour;
+                      if (val === "PM" && newHour !== 12) newHour += 12;
+                      if (val === "AM" && newHour === 12) newHour = 0;
+                      setScheduledHour(newHour.toString().padStart(2, "0"));
+                    }}
+                  >
+                    <SelectTrigger className="w-[80px]">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="AM">AM</SelectItem>
+                      <SelectItem value="PM">PM</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
             </div>
 

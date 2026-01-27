@@ -2,7 +2,7 @@
 
 import type React from "react";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Eye, EyeOff, Twitter } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -19,12 +19,21 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Separator } from "@/components/ui/separator";
 import { axiosInstance } from "@/lib/axiosInstance";
+import { useAppStore } from "@/store/useAppStore";
 
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const { isAuthenticated, checkAuth } = useAppStore();
   const router = useRouter();
+
+  useEffect(() => {
+    checkAuth();
+    if (isAuthenticated) {
+      router.push("/dashboard");
+    }
+  }, [checkAuth, isAuthenticated, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -39,7 +48,7 @@ export default function LoginPage() {
         localStorage.setItem("user_id", response?.data?.user?.id);
         localStorage.setItem(
           "social_account_id",
-          response?.data?.social_account?.id
+          response?.data?.social_account?.id,
         );
       }
       router.push("/dashboard");

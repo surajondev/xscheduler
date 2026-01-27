@@ -2,7 +2,7 @@
 
 import type React from "react";
 
-import { useReducer, useState } from "react";
+import { useReducer, useState, useEffect } from "react";
 import Link from "next/link";
 import { Eye, EyeOff, Twitter, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -21,7 +21,10 @@ import { axiosInstance } from "@/lib/axiosInstance";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 
+import { useAppStore } from "@/store/useAppStore";
+
 export default function RegisterPage() {
+  const { isAuthenticated, checkAuth } = useAppStore();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [formData, setFormData] = useState({
@@ -32,6 +35,13 @@ export default function RegisterPage() {
     confirmPassword: "",
   });
   const router = useRouter();
+
+  useEffect(() => {
+    checkAuth();
+    if (isAuthenticated) {
+      router.push("/dashboard");
+    }
+  }, [checkAuth, isAuthenticated, router]);
 
   const passwordRequirements = [
     { text: "At least 8 characters", met: formData.password.length >= 8 },
@@ -175,8 +185,8 @@ export default function RegisterPage() {
                         {passwordStrength === 5
                           ? "Strong"
                           : passwordStrength >= 3
-                          ? "Medium"
-                          : "Weak"}
+                            ? "Medium"
+                            : "Weak"}
                       </span>
                     </div>
                     <div className="space-y-1">
