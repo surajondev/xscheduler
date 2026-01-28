@@ -4,9 +4,9 @@ import { toast } from "sonner";
 export const baseURL =
   process.env.NODE_ENV === "development"
     ? "http://localhost:3333"
-    : "https://xscheduler-h9av.onrender.com/";
+    : "https://www.xscheduler-h9av.onrender.com/";
 
-// export const baseURL = "https://xscheduler-h9av.onrender.com/";
+// export const baseURL = "https://www.xscheduler-h9av.onrender.com/";
 
 export const axiosInstance = axios.create({
   baseURL,
