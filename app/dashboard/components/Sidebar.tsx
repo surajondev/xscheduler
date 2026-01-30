@@ -8,12 +8,16 @@ import {
   PenTool,
 } from "lucide-react";
 import { useDashboard } from "../context/DashboardContext";
+import { AccountSwitcher } from "./AccountSwitcher";
 
 export default function Sidebar() {
   const { activeTab, setActiveTab } = useDashboard();
   return (
-    <aside className="w-64 border-r border-border bg-sidebar h-full">
-      <nav className="p-4 space-y-2">
+    <aside className="w-64 border-r border-border bg-sidebar h-full flex flex-col">
+      <div className="p-4">
+        <AccountSwitcher />
+      </div>
+      <nav className="p-4 space-y-2 flex-1">
         <Button
           variant={activeTab === "compose" ? "default" : "ghost"}
           className="w-full justify-start gap-3"
