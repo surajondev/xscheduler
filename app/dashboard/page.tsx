@@ -136,6 +136,9 @@ export default function TwitterScheduler() {
           },
         );
         toast.success("Twitter Integrated Sucessfully");
+        setTweetText("");
+        setThreads([""]);
+        setAttachments([]);
       } catch (error: any) {
         toast.error(error.error || "Unable to connect");
       }
